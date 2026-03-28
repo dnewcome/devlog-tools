@@ -102,16 +102,37 @@ if [[ $SKIP_SCREENSHOT -eq 0 ]]; then
 
   else
     # Default mode: Chrome headless (no display needed, no WebGL)
+    # Resolve chrome binary across Linux and macOS
+    CHROME_BIN=""
+    for candidate in \
+      google-chrome \
+      google-chrome-stable \
+      chromium \
+      chromium-browser \
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+      "/Applications/Chromium.app/Contents/MacOS/Chromium"
+    do
+      if command -v "$candidate" &>/dev/null || [[ -x "$candidate" ]]; then
+        CHROME_BIN="$candidate"
+        break
+      fi
+    done
+
     if curl -sf --max-time 2 "http://localhost:$PORT" > /dev/null 2>&1; then
       echo "📸 Taking screenshot of http://localhost:$PORT ..."
-      google-chrome \
-        --headless=new \
-        --disable-gpu \
-        --no-sandbox \
-        --window-size=1280,720 \
-        --screenshot="$SCREENSHOT_FILE" \
-        "http://localhost:$PORT" \
-        2>/dev/null && SCREENSHOT_STATUS="captured" || SCREENSHOT_STATUS="chrome failed"
+      if [[ -z "$CHROME_BIN" ]]; then
+        SCREENSHOT_STATUS="chrome not found"
+        echo "⚠️  Chrome/Chromium not found — skipping screenshot"
+      else
+        "$CHROME_BIN" \
+          --headless=new \
+          --disable-gpu \
+          --no-sandbox \
+          --window-size=1280,720 \
+          --screenshot="$SCREENSHOT_FILE" \
+          "http://localhost:$PORT" \
+          2>/dev/null && SCREENSHOT_STATUS="captured" || SCREENSHOT_STATUS="chrome failed"
+      fi
     else
       SCREENSHOT_STATUS="server not running on port $PORT"
       echo "⚠️  Server not running on port $PORT — skipping screenshot"
