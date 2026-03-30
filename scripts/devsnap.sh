@@ -132,7 +132,7 @@ repeat with appName in appNames
     tell application appName
       if (count of windows) > 0 then
         set b to bounds of front window
-        return (item 1 of b) & "," & (item 2 of b) & "," & (item 3 of b) & "," & (item 4 of b)
+        return ((item 1 of b) as string) & "," & ((item 2 of b) as string) & "," & ((item 3 of b) as string) & "," & ((item 4 of b) as string)
       end if
     end tell
   end try
