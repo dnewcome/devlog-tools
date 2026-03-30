@@ -33,7 +33,7 @@ fi
 
 # Derive date and slug from filename (YYYY-MM-DD-HHmmss-slug.md)
 BASENAME=$(basename "$SOURCE" .md)
-DATE_PART=$(echo "$BASENAME" | grep -oP '^\d{4}-\d{2}-\d{2}')
+DATE_PART=$(echo "$BASENAME" | grep -oE '^[0-9]{4}-[0-9]{2}-[0-9]{2}')
 SLUG_PART=$(echo "$BASENAME" | sed "s/^${DATE_PART}-[0-9]\{6\}-//")
 
 DEST_FILENAME="${DATE_PART}_${SLUG_PART}.md"
@@ -46,7 +46,7 @@ TITLE=$(grep -m1 '^# ' "$SOURCE" | sed 's/^# //')
 BODY=$(sed '1{/^# /d;}' "$SOURCE")
 
 # Copy any screenshot referenced in the file to dnuke.com/src/images/
-SCREENSHOT=$(grep -oP '(?<=\!\[\]\()assets/[^)]+(?=\))' "$SOURCE" || true)
+SCREENSHOT=$(grep -oE '\!\[\]\(assets/[^)]+\)' "$SOURCE" | sed 's/!\[\](\(.*\))/\1/' || true)
 if [[ -n "$SCREENSHOT" ]]; then
   SRC_IMG="$REPO_ROOT/devlog/$SCREENSHOT"
   IMG_BASENAME=$(basename "$SCREENSHOT")
