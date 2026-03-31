@@ -16,7 +16,7 @@
 
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 DEVLOG_DIR="$REPO_ROOT/devlog"
 ASSETS_DIR="$DEVLOG_DIR/assets"
 PORT="${DEVSNAP_PORT:-9001}"
