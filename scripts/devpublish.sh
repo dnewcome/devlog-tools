@@ -125,8 +125,36 @@ echo "   Title:   $TITLE"
 echo "   Date:    $DATE_PART"
 echo ""
 
-# Build dnuke.com
+# Build dnuke.com to verify the entry renders before publishing
 echo "🔨 Building dnuke.com..."
-(cd "$DNUKE_ROOT" && npm run build 2>&1 | tail -3)
+BUILD_LOG="$(mktemp)"
+if (cd "$DNUKE_ROOT" && npm run build) >"$BUILD_LOG" 2>&1; then
+  echo "   build ok"
+else
+  echo "❌ dnuke.com build failed — not publishing:"
+  tail -12 "$BUILD_LOG"
+  rm -f "$BUILD_LOG"
+  exit 1
+fi
+rm -f "$BUILD_LOG"
 echo ""
-echo "Next: cd $DNUKE_ROOT && git add -p && git push"
+
+# Commit + push dnuke.com → triggers the DigitalOcean deploy.
+# Escape hatch: run with DEVPUBLISH_PUSH=0 to stage the change and push yourself.
+if [[ "${DEVPUBLISH_PUSH:-1}" == "1" ]]; then
+  echo "📤 Publishing to dnuke.com..."
+  (
+    cd "$DNUKE_ROOT"
+    git add "src/devlog/$PROJECT_SLUG"
+    [ -d "src/images/devlog/$PROJECT_SLUG" ] && git add "src/images/devlog/$PROJECT_SLUG"
+    if git diff --cached --quiet; then
+      echo "   (nothing new to publish)"
+    else
+      git commit -q -m "devlog($PROJECT_SLUG): $TITLE"
+      git push -q
+      echo "   ✅ pushed — DigitalOcean will redeploy dnuke.com shortly"
+    fi
+  )
+else
+  echo "DEVPUBLISH_PUSH=0 — staged only. Next: cd $DNUKE_ROOT && git add -p && git commit && git push"
+fi
